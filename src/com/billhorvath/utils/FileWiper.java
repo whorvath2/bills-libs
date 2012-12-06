@@ -47,7 +47,7 @@ public class FileWiper{
 
 	@param fileToWipe The file to be overwritten.
 	*/
-	public FileWiper(File fileToWipe, byte[] patterns){
+	private FileWiper(File fileToWipe, byte[] patterns){
 		this.fileToWipe = fileToWipe;
 		this.patterns = patterns;
 	}
@@ -57,10 +57,32 @@ public class FileWiper{
 	
 	@param fileToWipe The file to be overwritten.
 	*/
-	public FileWiper(File fileToWipe){
+	private FileWiper(File fileToWipe){
 		this(fileToWipe, DEFAULT_PATTERNS);
 	}
+	/**
+	Provides a factory method for stamping out instances of FileWiper which will use the {@link #DEFAULT_PATTERNS default patterns} for overwriting files.
+	
+	@param fileToWipe The file to be overwritten.
+	@return A FileWiper instance prepped to wipe <code>fileToWipe</code>.
+	*/
+	public static FileWiper getInstance(File fileToWipe){
+		return new FileWiper(fileToWipe, DEFAULT_PATTERNS);
+	}
 
+	/**
+	Provides a factory method for stamping out instances of FileWiper which will use <code>patterns</code> for overwriting files.
+	
+	@param fileToWipe The file to be overwritten.
+	@param patterns The byte patterns which will be used to overwrite <code>fileToWipe</code>.
+	@return A FileWiper instance prepped to wipe <code>fileToWipe</code>.		
+	*/
+
+	public static FileWiper getInstance(File fileToWipe, byte[] patterns){
+		assert patterns.length <= 4 : "WARNING: patterns has more than three bytes, which may significantly increase run time.";
+		return new FileWiper(fileToWipe, patterns);
+	}	
+	
 	/**
 	Allows this class to be invoked from the command line. For the operation to complete successfully, the <code>params</code> argument must be provided, must be of length 1, and must point to an actual file.
 	
@@ -88,6 +110,7 @@ public class FileWiper{
 					}
 				}
 			}
+			//Uses DEFAULT_PATTERNS to wipe the file.
 			FileWiper wiper = new FileWiper(checkMe);
 			wiper.wipeAndDelete();
 			System.out.println("...Done!");
@@ -118,7 +141,7 @@ public class FileWiper{
 	}
 	
 	/**
-	Wipes this instance's <code>fileToWipe</code> using a classic bit-overwriting technique. If fileToWipe is a directory, it's children will be recursively overwritten by other instances of FileWiper.
+	Wipes this instance's <code>fileToWipe</code> by overwriting it with bytes specified in the {@link patterns patterns} field, then deleting the file itself. If fileToWipe is a directory, it's children will be recursively overwritten by other instances of FileWiper.
 	
 	*/
 	private void wipeAndDelete(){
@@ -133,7 +156,7 @@ public class FileWiper{
 					File file = null;
 					for (int i = 0; i < childrenArray.length; i++){
 						file = childrenArray[i];
-						FileWiper wiper = new FileWiper(file);
+						FileWiper wiper = new FileWiper(file, patterns);
 						wiper.wipeAndDelete();
 					}
 				}
@@ -156,7 +179,7 @@ public class FileWiper{
 		}
 	}
 	/**
-	Overwrites <code>fileToWipe</code> with nonsensical bytes.
+	Overwrites <code>fileToWipe</code> repeatedly, once with each byte contained in <code>patterns</code>. Note that this method will skip files when it encounters an error, such as an IO or security exception. Subclasses may wish to redefine this behavior.
 	
 	*/
 	protected void overwrite(){
@@ -218,6 +241,7 @@ public class FileWiper{
 				System.err.println("Error: There was an I/O error overwriting the file at " + filePath + " Skipping...");
 			}
 			catch(Exception e){
+				System.err.println("Error: There was an unexpected exception overwriting the file at " + filePath + " Skipping...");
 				e.printStackTrace();
 			}
 			finally{
