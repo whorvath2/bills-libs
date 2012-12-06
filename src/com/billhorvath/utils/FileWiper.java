@@ -25,7 +25,10 @@ FileWiper provides a platform-independent means of securely wiping files. It may
 */
 public class FileWiper{
 
-	private static final Collection<String> TRUE_FALSE = Arrays.asList("true", "false", "t", "f");
+	/**
+	The default overwriting byte patterns to use when they're not specified by the user.	
+	*/
+	private static final byte[] DEFAULT_PATTERNS = {Byte.MAX_VALUE, (byte)0, Byte.MAX_VALUE};
 	/**
 	Specifies how to use this class from the command line, and is shown to the user when illegal paramaters are submitted.
 	*/
@@ -34,16 +37,30 @@ public class FileWiper{
 	The file that will be wiped by this instance of FileWiper.	
 	*/
 	private final File fileToWipe;
-	
+	/**
+	The collection of byte patterns used to overwrite each file.	
+	*/
+	private final byte[] patterns;
+
 	/**
 	Constructs a FileWiper instance, with fileToWipe being the file to be overwritten.
 
 	@param fileToWipe The file to be overwritten.
 	*/
-	public FileWiper(File fileToWipe){
+	public FileWiper(File fileToWipe, byte[] patterns){
 		this.fileToWipe = fileToWipe;
+		this.patterns = patterns;
 	}
+
+	/**
+	Delegates to FileWiper(fileToWipe, patterns) using the default value (DEFAULT_PATTERNS) for the patterns.
 	
+	@param fileToWipe The file to be overwritten.
+	*/
+	public FileWiper(File fileToWipe){
+		this(fileToWipe, DEFAULT_PATTERNS);
+	}
+
 	/**
 	Allows this class to be invoked from the command line. For the operation to complete successfully, the <code>params</code> argument must be provided, must be of length 1, and must point to an actual file.
 	
@@ -143,46 +160,30 @@ public class FileWiper{
 	
 	*/
 	protected void overwrite(){
-		FileOutputStream output = null;
+		String filePath = fileToWipe.getPath();
+		int size = 0;
 		FileInputStream input = null;
-		
 		try{
 			input = new FileInputStream(fileToWipe);
-			int size = 0;
 			while (input.read() != -1){
 				size++;
 			}
 			input.close();
-			
-			byte[] pattern = new byte[1];
-			pattern[0] = Byte.MAX_VALUE;
-			
-			/* TODO: Support multiple overwriting patterns/schems **/
-			
-			output = new FileOutputStream(fileToWipe);
-			int pointer = 0;
-			while (pointer < size){
-				output.write(pattern, 0, pattern.length);
-				pointer++;
-			}
 		}
 		catch(FileNotFoundException e){
-			System.err.println("Error: The file at " + fileToWipe.getPath() + " is unexpectedly missing. Skipping...");
+			System.err.println("Error: The file at " + filePath + " is unexpectedly missing. Skipping...");
 		}
 		catch(SecurityException e){
-			System.err.println("Error: You do not have permission to overwrite the file at " + fileToWipe.getPath() + " Skipping...");			
+			System.err.println("Error: You do not have permission to overwrite the file at " + filePath + " Skipping...");			
 		}
 		catch(IOException e){
-			System.err.println("Error: There was an I/O error overwriting the file at " + fileToWipe.getPath() + " Skipping...");
+			System.err.println("Error: There was an I/O error overwriting the file at " + filePath + " Skipping...");
 		}
 		catch(Exception e){
 			e.printStackTrace();
 		}
 		finally{
 			try{
-				if (output != null){
-					output.close();
-				}
 				if (input != null){
 					input.close();
 				}
@@ -191,5 +192,47 @@ public class FileWiper{
 				System.err.println(e.toString());
 			}
 		}
+
+		FileOutputStream output = null;
+		byte[] pattern = new byte[1];
+		
+		for (int i = 0; i < patterns.length; i++){
+			try{
+				
+				pattern[0] = patterns[i];
+				
+				output = new FileOutputStream(fileToWipe);
+				int pointer = 0;
+				while (pointer < size){
+					output.write(pattern, 0, pattern.length);
+					pointer++;
+				}
+			}
+			catch(FileNotFoundException e){
+				System.err.println("Error: The file at " + filePath + " is unexpectedly missing. Skipping...");
+			}
+			catch(SecurityException e){
+				System.err.println("Error: You do not have permission to overwrite the file at " + filePath + " Skipping...");			
+			}
+			catch(IOException e){
+				System.err.println("Error: There was an I/O error overwriting the file at " + filePath + " Skipping...");
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+			finally{
+				try{
+					if (output != null){
+						output.close();
+					}
+					if (input != null){
+						input.close();
+					}
+				}
+				catch(Exception e){
+					System.err.println(e.toString());
+				}
+			}
+		}	
 	}
 }
