@@ -1,4 +1,4 @@
-package com.doxsystems.util;
+package main.java.com.billhorvath.libs.util;
 
 import java.io.File;
 import java.net.URI;

@@ -1,0 +1,28 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>   
+
+  <groupId>com.billhorvath.libs</groupId>
+  <artifactId>util</artifactId>
+  <version>1.0.1</version>
+
+  <properties>
+    <java.version>11</java.version>
+  </properties>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

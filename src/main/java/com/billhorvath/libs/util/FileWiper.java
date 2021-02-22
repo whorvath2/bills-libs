@@ -1,7 +1,6 @@
-package com.billhorvath.utils;
+package main.java.com.billhorvath.libs.util;
 
 import java.io.*;
-import java.util.*;
 
 /**
 FileWiper provides a platform-independent means of securely wiping files. It may be used to wipe an individual file, a set of files within a particular directory, or an entire file structure housed on a storage device.

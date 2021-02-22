@@ -1,8 +1,7 @@
-package com.billhorvath.utils;
+package main.java.com.billhorvath.libs.util;
 
 import java.util.*;
 import java.io.*;
-import com.doxsystems.util.*;
 
 /**
 A utility for generating a set of random passwords for a list of users. I created this when I was migrating from one database to another, and I needed to generate a new password for each user.
