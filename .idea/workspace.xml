@@ -5,12 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fe099254-8448-49d9-9e13-b6e4a43460d0" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/billhorvath/utils/FileWiper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/FileWiper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/billhorvath/utils/PasswordSetGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/PasswordSetGenerator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/doxsystems/util/OSTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/OSTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/doxsystems/util/Strings.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/Strings.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/doxsystems/util/URIs.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/URIs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/FileWiper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/FileWiper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/OSTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/OSTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/PasswordSetGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/PasswordSetGenerator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/Strings.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/Strings.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/URIs.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/billhorvath/libs/util/URIs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-archiver/pom.properties" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-archiver/pom.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,7 +55,8 @@
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.3161343" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.Java" />
+    <property name="settings.editor.splitter.proportion" value="0.27647716" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
@@ -86,7 +89,7 @@
       <updated>1613774778887</updated>
       <workItem from="1613774783572" duration="518000" />
       <workItem from="1613775521286" duration="279000" />
-      <workItem from="1613951819528" duration="603000" />
+      <workItem from="1613951819528" duration="2723000" />
     </task>
     <servers />
   </component>
@@ -104,5 +107,9 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

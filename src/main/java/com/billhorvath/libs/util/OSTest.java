@@ -1,6 +1,6 @@
-package main.java.com.billhorvath.libs.util;
+package com.billhorvath.libs.util;
 
-import static main.java.com.billhorvath.libs.util.Strings.NL;
+import static com.billhorvath.libs.util.Strings.NL;
 
 /**
 This class provides a simple means of testing the OS running the JVM in which this class was instantiated. It currently tests for the following operating systems:
