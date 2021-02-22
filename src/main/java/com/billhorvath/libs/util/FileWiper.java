@@ -10,26 +10,28 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import static com.billhorvath.libs.util.Strings.NL;
+
 /**
  * FileWiper provides a platform-independent means of securely wiping files. It may be used to wipe
  * an individual file, a set of files within a particular directory, or an entire file structure
  * housed on a storage device.
  *
  * <p><b>IMPORTANT QUALIFIER:</b> FileWiper is NOT designed for securely wiping an entire disk!
- * Data
- * in the unused portion of a disk may be recoverable. This class is strictly for deleting
- * directories and files.
+ * Data in the unused portion of a disk may be recoverable. This class is strictly for deleting
+ * directories and files.</p>
+ *
  * <p>FileWiper may be executed from the command line using the pattern <code>java -cp [classpath]
  * FileWiper [fileToWipe]</code>. If the path fileToWipe is not fully specified from the root of the
- * file system, the behavior of this class is unspecified, and may be JVM- or OS-dependent.
+ * file system, the behavior of this class is unspecified, and may be JVM- or OS-dependent.</p>
  *
- * <p>Exit codes:
+ * <p>Exit codes:</p>
  * <ul>
  * <li>0 = The wiping operation completed successfully.</li>
  * <li>1 = The wiping operation failed due to an i/o or user error.</li>
  * </ul>
  * <p>Note: Files that the user is not authorized to read/write are skipped in this
- * implementation. Subclasses may wish to override this behavior to exit on these exceptions.
+ * implementation. Subclasses may wish to override this behavior to exit on these exceptions.</p>
  *
  * @author Bill Horvath II
  * @version 1.0
@@ -41,19 +43,37 @@ import java.io.IOException;
 public class FileWiper {
 
 	private static final Logger LOG = LoggerFactory.getLogger(FileWiper.class);
+
 	/**
 	 * The default overwriting byte patterns to use when they're not specified by the user.
 	 */
 	private static final byte[] DEFAULT_PATTERNS = {Byte.MAX_VALUE, (byte) 0, Byte.MAX_VALUE};
+
 	/**
 	 * Specifies how to use this class from the command line, and is shown to the user when illegal
 	 * paramaters are submitted.
 	 */
-	private static final String USAGE = "\nUsage: java -cp [classpath] FileWiper filePath\n\n";
+	private static final String USAGE =
+			NL + "Usage: java -cp [classpath] FileWiper filePath" + NL + NL;
+
+	/**
+	 * Formatted error reports for use with various exceptions.
+	 */
+	private static final String
+			PERMISSIONS_ERR = "Error: You do not have permission to overwrite the file at " +
+					"%s%nSkipping...",
+			IO_ERR = "Error: There was an I/O error overwriting the file at %s%nSkipping...",
+			MISSING_FILE_ERR = "Error: The file at %s is unexpectedly missing.%nSkipping...",
+			UNEXPECTED_ERR = "Error: There was an unexpected exception overwriting the file at " +
+					"%s%nSkipping...",
+			LISTING_FILES_ERR = "Error: Unable to list the files contained in %s";
+
+
 	/**
 	 * The file that will be wiped by this instance of FileWiper.
 	 */
 	private final File fileToWipe;
+
 	/**
 	 * The collection of byte patterns used to overwrite each file.
 	 */
@@ -122,21 +142,19 @@ public class FileWiper {
 				Console console = System.console();
 				if (console != null) {
 					console.writer()
-							.print("Warning: " + filePath + " is a directory. The directory, and" +
-									" " +
-									"all of the files it contains, will be wiped. Do you wish to" +
-									" " +
+							.print("Warning: " + filePath + " is a directory. The directory, and " +
+									"all of the files it contains, will be wiped. Do you wish to " +
 									"continue? (yes/no): ");
 					console.flush();
 					String str = console.readLine();
 					console.flush();
 					if (Strings.isEmpty(str)) {
-						System.err.println("Warning: empty response.");
+						System.err.println("Error: Empty response. Exiting...");
 						System.exit(1);
 					}
 					str = str.toLowerCase().trim();
 					if (!str.equals("yes")) {
-						System.out.println("Exiting...");
+						System.out.println("Response is not 'yes'...Exiting...");
 						System.exit(0);
 					}
 				}
@@ -166,12 +184,16 @@ public class FileWiper {
 	private static boolean checkFile(String filePath) {
 
 		if (Strings.isEmpty(filePath)) {
-			System.err.println("Error: The file's path is empty.\n");
+			if (LOG.isErrorEnabled()){
+				LOG.error("Error: The file's path is empty." + NL);
+			}
 			return false;
 		}
 		File maybe = new File(filePath);
 		if (!maybe.exists()) {
-			System.err.println("Error: The specified file doesn't exist.\n");
+			if (LOG.isErrorEnabled()){
+				LOG.error("Error: The specified file doesn't exist." + NL);
+			}
 			return false;
 		}
 		return true;
@@ -186,26 +208,26 @@ public class FileWiper {
 	private void wipeAndDelete() {
 		if (fileToWipe.isDirectory()) {
 			try {
-				File[] childrenArray = fileToWipe.listFiles();
-				if (childrenArray == null) {
+				File[] childFiles = fileToWipe.listFiles();
+				if (childFiles == null) {
 					if (LOG.isWarnEnabled()) {
-						LOG.warn("Error: Unable to list the files contained in " +
-								fileToWipe.getPath());
+						LOG.warn(String.format(LISTING_FILES_ERR, fileToWipe.getPath()));
 					}
 					System.exit(1);
 				}
-				if (childrenArray.length > 0) {
-					for (File file : childrenArray) {
-						FileWiper wiper = new FileWiper(file, patterns);
-						wiper.wipeAndDelete();
+				for (File file : childFiles) {
+					FileWiper wiper = new FileWiper(file, patterns);
+					wiper.wipeAndDelete();
+				}
+				if (!fileToWipe.delete()){
+					if (LOG.isWarnEnabled()){
+						LOG.warn(String.format(UNEXPECTED_ERR, fileToWipe.getPath()));
 					}
 				}
-				fileToWipe.delete();
 			}
 			catch (Exception e) {
-				if (LOG.isErrorEnabled()) {
-					LOG.error("Encountered an error attempting to wipe a file under " + fileToWipe,
-							e);
+				if (LOG.isWarnEnabled()) {
+					LOG.warn(String.format(UNEXPECTED_ERR, fileToWipe.getPath()));
 				}
 			}
 		}
@@ -213,16 +235,13 @@ public class FileWiper {
 			overwrite();
 			if (!fileToWipe.delete()) {
 				if (LOG.isWarnEnabled()) {
-					LOG.warn("Error: Unable to delete " + fileToWipe.getPath() +
-							" for an undetermined reason. The file may be in use by another " +
-							"process. Skipping...");
+					LOG.warn(String.format(UNEXPECTED_ERR, fileToWipe.getPath()));
 				}
 			}
 		}
 		catch (SecurityException e) {
 			if (LOG.isWarnEnabled()) {
-				LOG.warn("Error: this process doesn't have sufficient permissions to wipe "
-						+ fileToWipe.getPath() + " Skipping...");
+				LOG.warn(String.format(PERMISSIONS_ERR, fileToWipe.getPath()));
 			}
 		}
 	}
@@ -246,24 +265,23 @@ public class FileWiper {
 		}
 		catch (FileNotFoundException e) {
 			if (LOG.isWarnEnabled()) {
-				LOG.warn("Error: The file at " + filePath + " is unexpectedly missing. " +
-						"Skipping...");
+				LOG.warn(String.format(MISSING_FILE_ERR, filePath));
 			}
 		}
 		catch (SecurityException e) {
 			if (LOG.isWarnEnabled()) {
-				LOG.warn("Error: You do not have permission to overwrite the file at " + filePath +
-						" Skipping...");
+				LOG.warn(String.format(PERMISSIONS_ERR, filePath));
 			}
 		}
 		catch (IOException e) {
 			if (LOG.isWarnEnabled()) {
-				LOG.warn("Error: There was an I/O error overwriting the file at " + filePath +
-						" Skipping...");
+				LOG.warn(String.format(IO_ERR, filePath));
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			if (LOG.isWarnEnabled()){
+				LOG.warn(String.format(UNEXPECTED_ERR, filePath));
+			}
 		}
 		finally {
 			try {
@@ -281,11 +299,9 @@ public class FileWiper {
 		FileOutputStream output = null;
 		byte[] pattern = new byte[1];
 
-		for (int i = 0; i < patterns.length; i++) {
+		for (byte b : patterns) {
 			try {
-
-				pattern[0] = patterns[i];
-
+				pattern[0] = b;
 				output = new FileOutputStream(fileToWipe);
 				int pointer = 0;
 				while (pointer < size) {
@@ -295,26 +311,22 @@ public class FileWiper {
 			}
 			catch (FileNotFoundException e) {
 				if (LOG.isWarnEnabled()) {
-					LOG.warn("Error: The file at " + filePath + " is unexpectedly missing. " +
-							"Skipping...");
+					LOG.warn(String.format(MISSING_FILE_ERR, filePath));
 				}
 			}
 			catch (SecurityException e) {
 				if (LOG.isWarnEnabled()) {
-					LOG.warn("Error: You do not have permission to overwrite the file at " +
-							filePath + " Skipping...");
+					LOG.warn(String.format(PERMISSIONS_ERR, filePath));
 				}
 			}
 			catch (IOException e) {
 				if (LOG.isWarnEnabled()) {
-					LOG.warn("Error: There was an I/O error overwriting the file at " +
-							filePath + " Skipping...");
+					LOG.warn(String.format(IO_ERR, filePath));
 				}
 			}
 			catch (Exception e) {
 				if (LOG.isWarnEnabled()) {
-					LOG.warn("Error: There was an unexpected exception overwriting the file at " +
-							filePath + " Skipping...");
+					LOG.warn(UNEXPECTED_ERR);
 				}
 				e.printStackTrace();
 			}
