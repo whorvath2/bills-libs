@@ -79,6 +79,10 @@ public final class Strings {
         return (str == null || str.trim().equals(""));
     }
 
+    public static boolean isNotEmpty(String str){
+        return (!isEmpty(str));
+    }
+
     /**
     This method checks the str parameter to determine if it is non-null, and if it contains at least one character which is a letter (acc. to {@link Character#isLetter(char) Character.isLetter(char)}).
     @return <code>true</code> if <code>str</code> is not null nor the empty string, and if it contains at least one character which is a letter; <code>false</code> otherwise.
