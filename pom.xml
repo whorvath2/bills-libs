@@ -3,7 +3,11 @@
 
   <groupId>com.billhorvath.libs</groupId>
   <artifactId>util</artifactId>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
+
+  <name>Bill's Libs</name>
+  <description>A collection of utility libraries, created for convenience.</description>
+  <url>https://github.com/whorvath2/bills-libs</url>
 
   <dependencies>
     <dependency>
