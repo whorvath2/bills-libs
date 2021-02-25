@@ -1,6 +1,4 @@
-package com.billhorvath.libs.util;
-
-import static com.billhorvath.libs.util.Strings.NL;
+package co.deability.libs.util;
 
 /**
 This class provides a simple means of testing the OS running the JVM in which this class was instantiated. It currently tests for the following operating systems:
@@ -191,18 +189,18 @@ public class OSTest{
 	*/
 	@Override
 	public String toString(){
-		return "[OSTest]" + NL + Strings.indent(
-			"osName = " + osName + NL
-			+ "isWindows = " + windows + NL
-			+ "isXP = " + xp + NL
-			+ "is2003 = " + twothousandthree + NL
-			+ "isVista = " + vista + NL
-			+ "isNT = " + nt + NL
-			+ "isSeven = " + seven + NL
-			+ "isUnix = " + unix + NL
-			+ "isSolaris = " + solaris + NL
-			+ "isMac = " + mac + NL
-			+ "isLinux = " + linux + NL
-			+ "isUnknown = " + unknown + NL);
+		return "[OSTest]" + Strings.NL + Strings.indent(
+			"osName = " + osName + Strings.NL
+			+ "isWindows = " + windows + Strings.NL
+			+ "isXP = " + xp + Strings.NL
+			+ "is2003 = " + twothousandthree + Strings.NL
+			+ "isVista = " + vista + Strings.NL
+			+ "isNT = " + nt + Strings.NL
+			+ "isSeven = " + seven + Strings.NL
+			+ "isUnix = " + unix + Strings.NL
+			+ "isSolaris = " + solaris + Strings.NL
+			+ "isMac = " + mac + Strings.NL
+			+ "isLinux = " + linux + Strings.NL
+			+ "isUnknown = " + unknown + Strings.NL);
 	}
 }

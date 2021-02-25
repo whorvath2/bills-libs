@@ -1,4 +1,4 @@
-package com.billhorvath.libs.util;
+package co.deability.libs.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static com.billhorvath.libs.util.Strings.NL;
+import static co.deability.libs.util.Strings.NL;
 
 /**
  * FileWiper provides a platform-independent means of securely wiping (overwriting, then deleting)
@@ -24,7 +24,7 @@ import static com.billhorvath.libs.util.Strings.NL;
  * industry standards such as DoD 5220.22 or NIST 800-88.</p>
  *
  * <p>FileWiper may be executed from the command line using <code>java -cp [classpath]
- * com.billhorvath.libs.util.FileWiper fileToWipe [bytePatternString]</code>. If the path fileToWipe
+ * FileWiper fileToWipe [bytePatternString]</code>. If the path fileToWipe
  * is not fully specified from the root of the file system, the behavior of this class is
  * unspecified, and may be JVM- or OS-dependent. If the bytePatternString is supplied and is longer
  * than 3 bytes after conversion based on the UTF-8 character set, a warning about excessive

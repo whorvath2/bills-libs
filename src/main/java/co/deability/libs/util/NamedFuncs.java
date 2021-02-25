@@ -1,4 +1,4 @@
-package com.billhorvath.libs.util;
+package co.deability.libs.util;
 
 import java.io.File;
 import java.nio.file.FileSystems;
@@ -60,7 +60,7 @@ public interface NamedFuncs {
 	/**
 	 * A default implementation of FilePathChecker. Usage example:
 	 * <pre>{@code
-	 * import static com.billhorvath.libs.util.NamedFuncs.checkThatFile;
+	 * import static NamedFuncs.checkThatFile;
 	 * ...
 	 * String filePath = "./my/file/path";
 	 * if (checkThatFile.exists(filePath)){

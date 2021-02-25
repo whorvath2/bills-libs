@@ -1,4 +1,4 @@
-package com.billhorvath.libs.util;
+package co.deability.libs.util;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
