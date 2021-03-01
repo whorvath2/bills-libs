@@ -11,6 +11,11 @@ import java.util.function.*;
  * A collection of {@link FunctionalInterface functional interfaces} with names (and method names)
  * reflecting their true purpose. These can be used to create cleaner code whose purpose is
  * clearer to those reading it.
+ *
+ * @author Bill Horvath
+ * @version 1.0
+ * @since 1.1
+ *
  */
 public interface NamedFuncs {
 
@@ -39,6 +44,14 @@ public interface NamedFuncs {
 		 */
 		boolean exists(String filePath);
 
+		/**
+		 * Returns {@code true} if file is non-null and exists in the file system that's
+		 * accessible to the JVM in which this function is operating; {@code false} otherwise.
+		 *
+		 * @param file The file whose existence is to be tested.
+		 * @return {@code true} if file is non-null and exists in the file system that's
+		 * accessible to the JVM in which this function is operating; {@code false} otherwise.
+		 */
 		default boolean exists(File file){
 			return file != null && file.exists();
 		}
@@ -52,7 +65,7 @@ public interface NamedFuncs {
 		 * that's accessible to the JVM in which this function is operating; {@code false}
 		 * otherwise.
 		 */
-		default Predicate<String> validFileFilter(){
+		static Predicate<String> validFileFilter(){
 			return NamedFuncs.checkThatFile::exists;
 		}
 	}

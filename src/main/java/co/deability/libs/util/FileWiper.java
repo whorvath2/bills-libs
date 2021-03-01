@@ -20,7 +20,7 @@ import static co.deability.libs.util.Strings.NL;
  *
  * <p><em>IMPORTANT QUALIFIERS:</em> FileWiper is NOT designed for securely wiping an entire disk!
  * Data in an unused, previously written portion of a disk may be recoverable. This class is
- * strictly for deleting directories and files, and as such it <em>does not comply</em> with
+ * strictly for deleting directories and files, and as such it <em>does not</em> meet the
  * industry standards such as DoD 5220.22 or NIST 800-88.</p>
  *
  * <p>FileWiper may be executed from the command line using <code>java -cp [classpath]
@@ -41,12 +41,15 @@ import static co.deability.libs.util.Strings.NL;
  * <p>Note: Files that the user is not authorized to read/write are skipped in this
  * implementation. Subclasses may wish to override this behavior to exit on such exceptions.</p>
  *
- * @author Bill Horvath II
- * @version 1.2
- * @copyright (c) 2012 by William Horvath II
- * @license CC-A 2.0 (https://creativecommons.org/licenses/by/2.0/)
- * @attribution Please include a ReadMe file with your distribution that has a credit citing my name
+ * Copyright (c) 2012 by William Horvath II
+ * License: CC-A 2.0 (https://creativecommons.org/licenses/by/2.0/)
+ * Attribution: Please include a ReadMe file with your distribution that has a credit citing my name
  * and a link to https://billhorvath.com/ Thank you!
+ *
+ * @author Bill Horvath
+ * @version 1.2
+ * @since 1.0
+ *
  */
 public class FileWiper {
 
@@ -94,6 +97,13 @@ public class FileWiper {
 	private final byte[] overwriters;
 
 
+	/**
+	 * Constructor; protected to make access exclusive to subclasses. Clients of this class
+	 * should use {@link #getInstance(File)} or {@link #getInstance(File, byte[])} instead.
+	 *
+	 * @param fileToWipe The file to be overwritten and deleted.
+	 * @param overwriters The bytes to be used to overwrite the file.
+	 */
 	protected FileWiper(File fileToWipe, byte[] overwriters) {
 		this.fileToWipe = fileToWipe;
 		this.overwriters = overwriters;
