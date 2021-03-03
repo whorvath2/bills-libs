@@ -3,7 +3,10 @@ package co.deability.libs.util;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.*;
 import java.util.regex.*;
+import java.util.stream.*;
+
 
 /**
  * This class contains a collection of static utility methods designed to operate on instances of
@@ -19,11 +22,23 @@ import java.util.regex.*;
  */
 public final class Strings {
 
-	private static final String ALL_NUMS = "^#?\\d+$", BLANK = "\\s+";
+	private static final String
+			ALL_NUMS = "^#?\\d+$",
+			BLANK = "\\s+",
+			SIMPLE_US_FORMAT = "M'/'d'/'yyyy' 'h:mm aa";
+
+	private static final DateFormat HUMAN_FRIENDLY_US_FORMATTER = new SimpleDateFormat(
+			SIMPLE_US_FORMAT);
+
 	/**
 	 * The line separator for the OS in which the JVM is operating, expressed as a string.
 	 */
-	public static final String NL = System.getProperty("line.separator", "\n");
+	public static final String
+			NL = System.getProperty("line.separator", "\n"),
+			TB = "\t",
+			IN = "    ",
+			SP = " ",
+			EM = "";
 
 	/**
 	 * This class is a utility class, and will never be instantiated.
@@ -32,55 +47,54 @@ public final class Strings {
 
 
 	/**
-	 * This method calculates and returns a parenthesized String representing the current date and
-	 * time.
+	 * Returns a parenthesized String representing the current date and time; i.e., a date time
+	 * stamp.
+	 *
+	 * @return a parenthesized String representing the current date and time.
+	 * @see #dts()
 	 */
-	public static String dts() {
-		return '(' + dtsNoParens() + ')';
+	public static String parensDts() {
+		return '(' + dts() + ')';
 	}
 
 
 	/**
-	 * This method calculates and returns a String comprising a date-time stamp (via {@link #dts()
-	 * dts()} with a prepended space character.  (This allows the date-time stamp string to be
-	 * appended to the end of another string with minimal effort.)
-	 */
-	public static String trailingDts() {
-		return ' ' + Strings.dts();
-	}
-
-
-	/**
-	 * This method calculates and returns a String comprising a date-time stamp (via {@link #dts()
-	 * dts()} with an appended space character.  (This allows the date-time stamp string to be
-	 * prepended to the beginning of another string with minimal effort.)
-	 */
-	public static String leadingDts() {
-		return Strings.dts() + ' ';
-	}
-
-
-	/**
-	 * Returns a String representing the current date and time.
+	 * Returns a string representing the JVM's current date and time with minute-level
+	 * specificity and in a format easily consumable by humans; e.g.:
+	 *
+	 * <ul>
+	 *     <li>1/1/2010 1:01 AM</li>
+	 *     <li>12/12/2015 11:32 PM</li>
+	 *     <li>10/5/1988 12:14 PM</li>
+	 * </ul>
 	 *
 	 * @return a String representing the current date and time.
 	 */
-	public static String dtsNoParens() {
+	public static String dts() {
 		Date date = new Date(System.currentTimeMillis());
-		DateFormat formatter = new SimpleDateFormat("M'/'d'/'yy' 'h:mm aa");
-		return formatter.format(date);
+		return HUMAN_FRIENDLY_US_FORMATTER.format(date);
 	}
 
 
 	/**
-	 * Returns the supplied string with all non-numeric characters removed.
+	 * Returns the supplied string with all non-numeric characters removed; e.g.:
+	 * <ul>
+	 *     <li>Strings.keepOnlyNumbers("1234") returns "1234" </li>
+	 *     <li>Strings.keepOnlyNumbers("a1b2c3d4e") returns "1234"</li>
+	 *     <li>Strings.keepOnlyNumbers("foobar") returns ""</li>
+	 * </ul>
+	 * This method throws a NullPointerException if the supplied string is {@code null}.
 	 *
 	 * @param str The string from which non-numeric characters should be removed.
-	 *
 	 * @return The supplied string with all non-numeric character removed.
+	 * @throws NullPointerException if str is null.
 	 */
-	public static String keep_only_numbers(String str) {
-		return str.replaceAll("[^\\d]", "");
+	public static String keepOnlyNumbers(String str) {
+//		return str.replaceAll("[^\\d]", EM); //todo test performance vs functional approach
+		return str.chars()
+				.filter(Character::isDigit)
+				.mapToObj(String::valueOf)
+				.reduce(EM, String::concat);
 	}
 
 
@@ -95,7 +109,7 @@ public final class Strings {
 	 * 	 * entirely of whitespace characters; {@code false} otherwise.
 	 */
 	public static boolean isEmpty(String str) {
-		return (str == null || str.trim().equals(""));
+		return (str == null || str.trim().isEmpty());
 	}
 
 
@@ -120,114 +134,139 @@ public final class Strings {
 	 *
 	 * @param str The string to be checked for alphabetic content.
 	 * @return {@code true} if the supplied string is non-null contains at least one character
-	 * which is a letter (acc. to {@link Character#isLetter(char)}); {@code false} otherwise.
+	 * which is a letter; {@code false} otherwise.
 	 */
 	public static boolean hasLetter(String str) {
 		if (Strings.isEmpty(str)) {
 			return false;
 		}
-		for (int i = 0, n = str.length(); i < n; i++) {
-			char c = str.charAt(i);
-			if (Character.isLetter(c)) {
-				return true;
-			}
-		}
-		return false;
+		return str.chars()
+				.parallel()
+				.filter(Character::isLetter)
+				.findAny()
+				.isPresent();
 	}
 
 
 	/**
-	 * Returns a string with all occurrences of the supplied ({@code remove}) character omitted 
-	 * from the beginning of {@code str}. If the character does not occur at the beginning of 
-	 * {@code str}, a string that is equal to the supplied string will be returned.
+	 * Returns a string with all occurrences of the supplied character omitted from the
+	 * beginning of the supplied string. If the character to be removed does not occur at least
+	 * once starting at index 0 of the string's underlying array, a string that is equal to the
+	 * supplied string will be returned.
+	 *
+	 * <p>If the supplied string is {@link #isEmpty(String) is empty}, it will be returned
+	 * without modification, <em>regardless of which character to be removed is supplied.</em> This
+	 * may result in a {@code null} value being returned.</p>
+	 *
+	 * <p>Examples of how this method behaves:
+	 * <ul>
+	 *     <li>{@code Strings.trimLeading("foobarf", 'f')} will return "oobarf"</li>
+	 *     <li>{@code Strings.trimLeading("fffffoobar", 'f')} will return "oobar"</li>
+	 *     <li>{@code Strings.trimLeading("foobar", 'o')} will return "foobar"</li>
+	 *     <li>{@code Strings.trimLeading(" foobar", 'f')} will return " foobar"</li>
+	 *     <li>{@code Strings.trimLeading("  \t\n  ", ' ')} will return "  \t\n "</li>
+	 *     <li>{@code Strings.trimLeading(null, 'f')} will return {@code null}</li>
+	 * </ul>
 	 *
 	 * @param str    The string to be analyzed for leading occurrences of the character
 	 *               {@code remove}.
 	 * @param remove The character to be removed from the beginning of {@code str}.
-	 * @return A string with all occurences of {@code remove} omitted from the beginning.
+	 * @return A string with all occurrences of {@code remove} omitted from the beginning.
 	 */
 	public static String trimLeading(String str, char remove) {
-		if (Strings.isEmpty(str)) {
-			return str;
-		}
-		char[] chars = str.toCharArray();
+		if (Strings.isEmpty(str)) return str;
 		int i = 0;
-		while (true) {
-			if (chars[i] != remove) {
+		for (char c: str.toCharArray()){
+			if (c != remove) {
 				break;
 			}
 			i++;
-			if (i >= chars.length) {
-				break;
-			}
 		}
-		return String.valueOf(chars, i, chars.length - i);
+		return str.substring(i);
 	}
 
 
 	/**
-	 * Returns a string equal to the supplied string, but with all occurrences of the supplied
-	 * character {@code remove} omitted from its end.  If the character does not occur at the end
-	 * of {@code str}, a string that's its equal will be returned.
+	 * Returns a string with all occurrences of the supplied character omitted from the
+	 * end of the supplied string. If the character to be removed does not occur at least
+	 * once at the last index of the string's underlying array, a string that is
+	 * equal to the supplied string will be returned.
 	 *
-	 * If {@code str} consists exclusively of one or more occurrences of {@code remove}, the
-	 * empty string will be returned.
+	 * <p>If the supplied string is {@link #isEmpty(String) is empty}, it will be returned
+	 * without modification, <em>regardless of which character to be removed is supplied.</em> This
+	 * may result in a {@code null} value being returned.</p>
+	 *
+	 * <p>Examples of how this method behaves:</p>
+	 * <ul>
+	 *     <li>{@code Strings.trimTrailing("foobar", 'r')} will return "fooba"</li>
+	 *     <li>{@code Strings.trimTrailing("foobarrrr", 'r')} will return "fooba"</li>
+	 *     <li>{@code Strings.trimTrailing("foobar", 'a')} will return "foobar"</li>
+	 *     <li>{@code Strings.trimTrailing("foobar ", 'r')} will return "foobar "</li>
+	 *     <li>{@code Strings.trimTrailing("  \t\n  ", ' ')} will return "  \t\n "</li>
+	 *     <li>{@code Strings.trimTrailing(null, 'r')} will return {@code null}</li>
+	 * </ul>
 	 *
 	 * @param str    The string to be analyzed for trailing occurrences of the character
 	 *               {@code remove}.
 	 * @param remove The character to be removed from the end of {@code str}.
-	 *
-	 * @return a String equal to {@code str} with {@code remove} trimmed from its end.
-	 * (Note that this may be the empty string (""), if {@code str} is composed
-	 * entirely of {@code remove}.)
+	 * @return A string with all occurrences of {@code remove} omitted from the end.
 	 */
+
 	public static String trimTrailing(String str, char remove) {
-		String string = str;
-		char[] chars = string.toCharArray();
-		int i = chars.length - 1;
-		while (true) {
-			if (i < 0) {
-				i = 0;
-				break;
-			}
-			char current = chars[i];
-			if (current != remove) {
+		if (Strings.isEmpty(str)) return str;
+		char[] chars = str.toCharArray();
+		int i = chars.length;
+		while (i > 0) {
+			i--;
+			if (chars[i] != remove) {
 				i++;
 				break;
 			}
-			i--;
 		}
-		string = String.valueOf(chars, 0, i);
-		return string;
+		return str.substring(0, i);
 	}
 
 
 	/**
-	 * This method calculates and returns a string with all occurrences of the
-	 * character {@code remove} omitted from the beginning and end of {@code str}.  If
-	 * the character does not occur in either the beginning or end of {@code str}, a string
-	 * equivalent to str will be returned. If the supplied string is composed exclusively of the
-	 * character to be removed, the empty string ("") will be returned.
+	 * Returns a string with all occurrences of the character {@code remove} omitted from the
+	 * beginning and end of {@code str}. If the supplied character does not occur at least once
+	 * at the beginning or end of the supplied string's underlying character array, the supplied
+	 * string will be returned.
+	 *
+	 * <p>If the supplied string is {@link #isEmpty(String) is empty}, it will be returned
+	 * without modification, <em>regardless of which character to be removed is supplied.</em> This
+	 * may result in a {@code null} value being returned.</p>
+
+	 * <p>Examples of how this method behaves:
+	 * <ul>
+	 *     <li>{@code Strings.trim("foobar", 'r')} will return "fooba"</li>
+	 *     <li>{@code Strings.trim("foobarrrr", 'f')} will return "oobarrrr"</li>
+	 *     <li>{@code Strings.trim("rawr", 'r')} will return "aw"</li>
+	 *     <li>{@code Strings.trim(" foobar ", 'r')} will return "foobar "</li>
+	 *     <li>{@code Strings.trim("  \t\n  ", ' ')} will return "  \t\n "</li>
+	 *     <li>{@code Strings.trim(null, 'r')} will return {@code null}</li>
+	 * </ul>
 	 *
 	 * @param str    The string to be analyzed for leading and trailing occurrences of the
      *                  character {@code remove}.
 	 * @param remove The character to be removed from the beginning and ending of {@code str}.
-	 * @return
+	 * @return The supplied string with all occurrences of the character {@code remove} omitted
+	 * from its beginning and end.
+	 * @see #trimTrailing(String, char)
+	 * @see #trimLeading(String, char)
 	 *
 	 */
 	public static String trim(String str, char remove) {
-		String string = Strings.trimLeading(str, remove);
-		string = Strings.trimTrailing(string, remove);
-		return string;
+		return Strings.trimTrailing(Strings.trimLeading(str, remove), remove);
+
 	}
 
 
 	/**
-	 * This method calculates and returns a string with {@code numToRemove}
-	 * characters omitted from the ending of {@code str}.  If {@code numToRemove} is less
-	 * than zero, a string equivalent to {@code str} will be returned.  if
-	 * {@code numToRemove} is equal to or greater than {@code str}'s length, the empty
-	 * string will be returned.
+	 * Returns the supplied string with {@code numToRemove} characters omitted from its end. If
+	 * {@code numToRemove} is less than or equal to zero, the supplied string will be returned.
+	 * if {@code numToRemove} is equal to or greater than the supplied string's length, the
+	 * empty string will be returned.
 	 *
 	 * @param str         The string whose last two {@code numToRemove} characters are to be
 	 *                    removed.
@@ -245,104 +284,73 @@ public final class Strings {
 
 
 	/**
-	 * Ensures that the string is trimmed at n'th character. Where n = length.
+	 * Returns the supplied string after all lines (including the first) are prefixed by
+	 * the supplied number of tab characters, or their equivalence in four-space ("    ")
+	 * strings, as determined by the supplied boolean. The lines in the supplied string are
+	 * identified as such by the system-specific line separator character for the JVM. If the
+	 * supplied string {@link #isEmpty(String) is empty}, a string of tabs or spaces that is as
+	 * long as is specified by {@code numTabs} will be returned.
 	 *
-	 * @param s
-	 * @param length
-	 * @return
-	 */
-	public static String ensureLength(String s, int length) {
-		String retValue = s;
-		if (s != null && s.length() > length) {
-			retValue = s.substring(0, length);
-		}
-		return retValue;
-	}
-
-
-	/**
-	 * This method examines a string for the lines it contains, and returns a string
-	 * in which all lines (including the first) are preceded by a number of tab characters (or
-     * their
-	 * equivalence in space characters.)  Note that if numTabs is less than or equal to zero, this
-	 * method will have no effect (i.e., it will return a String instance equal to
-	 * {@code str}.);
+	 * <p>If the supplied number of tabs is less than or equal to zero, this method will
+	 * have no effect, and the supplied string will be returned unaltered. Note this may result
+	 * in a {@code null} value being returned.</p>
 	 *
 	 * @param str     The String whose lines are to be indented.
 	 * @param numTabs The number of tabs (or blank space equivalents) to insert before each line.
-	 * @return A String whose lines are each indented by {@code numTabs} tabs, or the empty
-	 * string ("") if the {@code str} parameter is {@code null} or empty.
+	 * @param useTabs Whether to use tabs (true) or four-space strings (false) as the means of
+	 *                   indenting.
+	 * @return The supplied string with each line indented by {@code numTabs} tabs (or their space
+	 * equivalent).
 	 */
-	public static String indent(String str, int numTabs) {
-		String tab = "   ";
-
-		if (Strings.isEmpty(str)) {
-			return "";
-		}
+	public static String indent(String str, int numTabs, boolean useTabs) {
 		if (numTabs <= 0) {
 			return str;
 		}
-
-		String indent = "";
+		String holder = EM;
 		for (int i = 0; i < numTabs; i++) {
-			indent += tab;
+			holder += (useTabs) ? TB : IN;
 		}
-
-		String result = "";
-
+		final String indent = holder;
+		if (Strings.isEmpty(str)) {
+			return indent;
+		}
 		String[] lines = str.split(Strings.NL);
-
-		for (int i = 0; i < lines.length - 1; i++) {
-			lines[i] = indent + lines[i];
-			result += lines[i] + Strings.NL;
-		}
-		String last = lines[lines.length - 1];
-		if (Strings.isEmpty(last)) {
-			result += indent + Strings.NL;
-		}
-		else {
-			result += indent + last;
-		}
-		return result;
+		return Arrays.stream(lines)
+				.map(line -> indent + line)
+				.collect(Collectors.joining(Strings.NL));
 	}
 
 
 	/**
-	 * This is a convenience method for accessing {@link #indent(String, int) indent} with an
-	 * argument of one (1) for the {@code numTabs} parameter.
+	 * Returns the supplied string after its lines have been indented by one tab each. This is a
+	 * convenience method for accessing {@link #indent(String, int, boolean) indent}
+	 * with default arguments of {@code 1} and {@code true}.
 	 *
-	 * @param str
-	 * @return
-	 *
+	 * @param str The string to be indented.
+	 * @return The supplied string after its lines have been indented by one tab each.
 	 */
 	public static String indent(String str) {
-		return Strings.indent(str, 1);
+		return Strings.indent(str, 1, true);
 	}
 
 
 	/**
-	 * This method counts the number of times {@code countMe} appears in {@code str}.
+	 * Returns the number of times the supplied character appears in the supplied string.
 	 *
 	 * @param str     The string in which to look for {@code countMe}.
-	 * @param countMe The character to count in {@code str}.
-	 * @return An int indicating how many occurrences of {@code countMe} are contained in
-	 * {@code str}.
+	 * @param countMe The character to look for in {@code str}.
+	 * @return how many times {@code countMe} appears in {@code str}.
 	 */
-	public static int frequency(String str, char countMe) {
-		char[] chars = str.toCharArray();
-		int counter = 0;
-		for (int i = 0; i < chars.length; i++) {
-			counter += (chars[i] == countMe) ? 1 : 0;
-		}
-		return counter;
+	public static long frequency(String str, char countMe) {
+		return str.chars().parallel().filter(c -> c == countMe).count();
 	}
 
 
 	/**
 	 * This method calculates and returns an integer which indicates the number of times
-	 * {@code count} appears at the end of {@code str}.  If the character does not occur
-	 * at the end of {@code str}, zero will be returned.  If {@code str} consists only of
-	 * one or more occurrences of {@code count}, str.length() will be returned.
+	 * {@code count} appears at the end of {@code str}. If the supplied character does not occur
+	 * at the end of {@code str}, zero will be returned. If {@code str} consists only of
+	 * one or more occurrences of the supplied character, str.length() will be returned.
 	 *
 	 * @param str   The string to be analyzed for trailing occurrences of the character
 	 *              {@code count}.
@@ -353,17 +361,13 @@ public final class Strings {
 	 */
 	public static int countTrailing(String str, char count) {
 		int result = 0;
-		char[] chars = str.toCharArray();
-		int i = chars.length - 1;
-		while (true) {
-			if (i < 0) {
-				break;
+		if (Strings.isNotEmpty(str)) {
+			char[] chars = str.toCharArray();
+			int i = chars.length - 1;
+			while (i >= 0 && chars[i] == count) {
+				result++;
+				i--;
 			}
-			if (chars[i] != count) {
-				break;
-			}
-			result++;
-			i--;
 		}
 		return result;
 	}
@@ -371,9 +375,9 @@ public final class Strings {
 
 	/**
 	 * This method calculates and returns an integer which indicates the number of times
-	 * {@code count} appears at the end of {@code str}.  If {@code count} does not
-	 * occur at the end of {@code str}, zero will be returned.  If {@code str} consists
-	 * only of one or more occurrences of {@code count}, str.length() will be returned.
+	 * {@code count} appears at the end of {@code str}. If {@code count} does not  occur at the
+	 * end of {@code str}, zero will be returned. <em>If either of the supplied strings is null,
+	 * no exception will be thrown, and 0 will be returned.</em>
 	 *
 	 * @param str   The string to be analyzed for trailing occurrences of the string
 	 *              {@code count}.
@@ -383,10 +387,11 @@ public final class Strings {
 	 * end of {@code str}.
 	 */
 	public static int countTrailing(String str, String count) {
+		if (str == null || count == null) return 0;
 		int result = 0;
 		int countLength = count.length();
 		String check = str;
-		while (check.endsWith(count)) {
+		while (check.length() > 0 && check.endsWith(count)) {
 			result++;
 			check = check.substring(0, check.length() - countLength);
 		}
@@ -395,7 +400,7 @@ public final class Strings {
 
 
 	/**
-	 *
+	 * Returns {@code true} if {@code searchMe} starts with {@code pattern}
 	 * @param searchMe
 	 * @param pattern
 	 * @return
@@ -473,7 +478,7 @@ public final class Strings {
 	 */
 	public static String abbreviate(String str) {
 
-		String result = "";
+		String result = EM;
 		String[] words = str.split(" +");
 		for (String word : words) {
 			char[] chars = word.toCharArray();
@@ -521,14 +526,12 @@ public final class Strings {
 				buff.append('.');
 				buff.append(' ');
 				int j = chars.length - 1;
-				int q = Character.getType(chars[j]);
 
-				if (punctuation(q)) {
+				if (isPunctuation(chars[j])) {
 					buff.deleteCharAt(buff.length() - 1);
-					while (punctuation(q)) {
+					while (isPunctuation(chars[j])) {
 						buff.append(chars[j]);
 						j--;
-						q = Character.getType(chars[j]);
 					}
 				}
 			}
@@ -593,7 +596,7 @@ public final class Strings {
 		// Get rid of spaces at the beginning and end, and multiple spaces in the middle, then
 		// split around the spaces
 		String[] aWords = aString.trim().replaceAll(BLANK, " ").split(BLANK);
-		String[] bWords = bString.trim().replaceAll(BLANK, " ").split(BLANK);
+		String[] bWords = bString.trim().replaceAll(BLANK, SP).split(BLANK);
 
 		int result = 0;
 		boolean aShorter = aWords.length < bWords.length;
@@ -648,20 +651,82 @@ public final class Strings {
 
 
 	/**
+	 * Returns {@code true} if the supplied character is a punctuation mark; {@code false}
+	 * otherwise.
 	 *
-	 * @param q
-	 * @return
+	 * @param ch The character to be tested to see if it is a punctuation mark.
+	 * @return {@code true} if the supplied character is a punctuation mark; {@code false}
+	 * otherwise.
 	 */
-	private static boolean punctuation(int q) {
-		return ((q == Character.CONNECTOR_PUNCTUATION
-				|| q == Character.DASH_PUNCTUATION
-				|| q == Character.END_PUNCTUATION
-				|| q == Character.FINAL_QUOTE_PUNCTUATION
-				|| q == Character.INITIAL_QUOTE_PUNCTUATION
-				|| q == Character.OTHER_PUNCTUATION
-				|| q == Character.START_PUNCTUATION)
-				&& q != '.');
+	public static boolean isPunctuation(char ch) {
+		int type = Character.getType(ch);
+		//todo ensure these are in optimal order acc. to statistical data regarding usage
+		return Strings.punctuationCheck.test(type);
 	}
+
+
+	/**
+	 * Returns {@code true} if the supplied Unicode code point is valid and represents a
+	 * punctuation mark; {@code false} otherwise.
+	 *
+	 * @param codePoint An integer value
+	 * @return {@code true} if the supplied Unicode code point is valid and represents a
+	 * punctuation mark; {@code false} otherwise.
+	 * @throws IllegalArgumentException if the supplied integer is not a valid
+	 * <a href="https://web.archive.org/web/20180919061218/https://www.unicode.org/versions/Unicode11.0.0/ch02.pdf">Unicode
+	 * code point.</a>
+	 */
+	public static boolean isPunctuation(int codePoint){
+		if (!Character.isValidCodePoint(codePoint)){
+			throw new IllegalArgumentException(codePoint + " is not a valid Unicode code point " +
+					"value.");
+		}
+		int type = Character.getType(codePoint);
+		return Strings.punctuationCheck.test(type);
+	}
+
+
+	/**
+	 * Tests an integer to see if it is equal to one of the {@link Character#getType(int) Java
+	 * constants} that correspond to a Unicode category that indicates a form of punctuation, and
+	 * returns {@code true} if that is the case.
+	 *
+	 * <p>Most clients of this function will use it as follows:</p>
+	 * <pre>{@code
+	 * String str = "Foobar.";
+	 * char[] letters = str.toCharArray();
+	 * for (char c : letters){
+	 *     // Get the unicode category constant...
+	 *     int type = Character.getType(c);
+	 *     // Test the constant to see if it represents a punctuation category...
+	 *     if (Strings.punctuationCheck.test(type)){
+	 *         ...Do something with this character c that's some form of punctuation...
+	 *     }
+	 * }
+	 * }</pre>
+	 *
+	 * <p>The Unicode categories considered by this test to be punctuation include:</p>
+	 * <ul>
+	 *     <li>{@link Character#END_PUNCTUATION}</li>
+	 *     <li>{@link Character#START_PUNCTUATION}</li>
+	 *     <li>{@link Character#DASH_PUNCTUATION}</li>
+	 *     <li>{@link Character#CONNECTOR_PUNCTUATION}</li>
+	 *     <li>{@link Character#INITIAL_QUOTE_PUNCTUATION}</li>
+	 *     <li>{@link Character#FINAL_QUOTE_PUNCTUATION}</li>
+	 *     <li>{@link Character#OTHER_PUNCTUATION}</li>
+	 * </ul>
+	 *
+	 *
+	 */
+	//todo ensure these are in optimal order acc. to statistical data regarding punctuation usage
+	public static final Predicate<Integer> punctuationCheck = (unicodeCategory) ->
+				unicodeCategory == Character.END_PUNCTUATION
+				|| unicodeCategory == Character.START_PUNCTUATION
+				|| unicodeCategory == Character.DASH_PUNCTUATION
+				|| unicodeCategory == Character.CONNECTOR_PUNCTUATION
+				|| unicodeCategory == Character.INITIAL_QUOTE_PUNCTUATION
+				|| unicodeCategory == Character.FINAL_QUOTE_PUNCTUATION
+				|| unicodeCategory == Character.OTHER_PUNCTUATION;
 
 
 	/**
@@ -684,7 +749,7 @@ public final class Strings {
 		}
 		// Paul Sep-18-08: List lit = new ArrayList() -> List<String> = new ArrayList<String>()
 		List<String> list = new ArrayList<String>(map.values());
-		String result = "";
+		String result = EM;
 		for (int i = 0, n = list.size(); i < n; i++) {
 			// Paul Sep-18-08 : Removed unecessary (String) cast on list.get(i)
 			result += list.get(i) + paraSep;
@@ -767,14 +832,14 @@ public final class Strings {
 	 */
 	public static String decodeGroupName(String string) {
 		if (string == null) {
-			return "";
+			return EM;
 		}
 		// first, decode the string
 		string = decode(string);
 		// ensure that if the string is a group name, the group number is removed.
-		String[] words = string.split(" ");
+		String[] words = string.split(SP);
 		if (words.length == 0) {
-			return "";
+			return EM;
 		}
 
 		try {
@@ -826,7 +891,7 @@ public final class Strings {
 	 * @return
 	 */
 	public static String padRight(String s, int n, String replacement) {
-		return String.format("%1$-" + n + "s", s).replaceAll(" ", replacement);
+		return String.format("%1$-" + n + "s", s).replaceAll(SP, replacement);
 	}
 
 
@@ -839,7 +904,7 @@ public final class Strings {
 	 * @return
 	 */
 	public static String padLeft(String s, int n, String replacement) {
-		return String.format("%1$#" + n + "s", s).replaceAll(" ", replacement);
+		return String.format("%1$#" + n + "s", s).replaceAll(SP, replacement);
 	}
 
 
